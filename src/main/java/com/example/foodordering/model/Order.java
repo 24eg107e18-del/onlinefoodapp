@@ -35,6 +35,8 @@ public class Order {
     @Indexed
     private OrderStatus orderStatus = OrderStatus.PENDING;
 
+    private String transactionId = "COD-PENDING";
+
     private Instant updatedAt = Instant.now();
 
     public Order() {
@@ -137,6 +139,14 @@ public class Order {
 
     public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
     }
 
     public Instant getUpdatedAt() {

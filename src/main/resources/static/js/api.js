@@ -199,10 +199,10 @@ export const api = {
 
     // Orders
     orders: {
-        place(deliveryAddress, paymentMethod = 'CASH_ON_DELIVERY') {
+        place(deliveryAddress, paymentMethod = 'CASH_ON_DELIVERY', transactionId = null) {
             return request('/orders', {
                 method: 'POST',
-                body: JSON.stringify({ deliveryAddress, paymentMethod })
+                body: JSON.stringify({ deliveryAddress, paymentMethod, transactionId })
             });
         },
         getMyOrders() {

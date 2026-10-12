@@ -131,7 +131,10 @@
                             </div>
                             <div>
                                 <div style="font-weight: 700; font-size: 0.95rem;">Payment Mode:</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.2rem;">${order.paymentMethod} (${order.paymentStatus})</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.2rem;">
+                                    ${order.paymentMethod} (${order.paymentStatus})
+                                    ${order.transactionId ? `<br><small style="font-family: monospace; color: var(--primary); font-weight: 600;">Ref: ${order.transactionId}</small>` : ''}
+                                </div>
                             </div>
                         </div>
                     </div>

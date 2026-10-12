@@ -105,6 +105,15 @@ public class OrderService {
                 ? request.getPaymentMethod().trim()
                 : "CASH_ON_DELIVERY";
 
+        boolean isOnlinePayment = "ONLINE_CARD".equalsIgnoreCase(paymentMethod)
+                || "UPI".equalsIgnoreCase(paymentMethod)
+                || "NET_BANKING".equalsIgnoreCase(paymentMethod);
+
+        PaymentStatus initialPaymentStatus = isOnlinePayment ? PaymentStatus.PAID : PaymentStatus.PENDING;
+        String transactionId = request.getTransactionId() != null && !request.getTransactionId().isBlank()
+                ? request.getTransactionId().trim()
+                : (isOnlinePayment ? "TXN-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase() : "COD-PENDING");
+
         Order order = new Order(
                 null,
                 customerId,
@@ -113,9 +122,10 @@ public class OrderService {
                 totalAmount,
                 deliveryAddress,
                 paymentMethod,
-                PaymentStatus.PENDING,
+                initialPaymentStatus,
                 OrderStatus.PENDING
         );
+        order.setTransactionId(transactionId);
 
         Order savedOrder = orderRepository.save(order);
 
@@ -201,7 +211,7 @@ public class OrderService {
                 ))
                 .collect(Collectors.toList());
 
-        return new OrderResponse(
+        OrderResponse response = new OrderResponse(
                 order.getId(),
                 order.getCustomerId(),
                 order.getCustomerName(),
@@ -214,5 +224,7 @@ public class OrderService {
                 order.getOrderStatus(),
                 order.getUpdatedAt()
         );
+        response.setTransactionId(order.getTransactionId());
+        return response;
     }
 }

@@ -103,6 +103,40 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("Should successfully process online card payment and mark order as PAID")
+    void testPlaceOrderOnlinePaymentSuccess() {
+        activeCart.getItems().add(new CartItem("food-1", 1));
+
+        when(cartService.getOrCreateCart("user-1")).thenReturn(activeCart);
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(testUser));
+        when(foodItemRepository.findAllById(List.of("food-1"))).thenReturn(List.of(foodItem1));
+
+        Order savedOrder = new Order(
+                "order-202",
+                "user-1",
+                "Alice Smith",
+                List.of(new OrderItem("food-1", "Chicken Burger", new BigDecimal("15.00"), 1, new BigDecimal("15.00"))),
+                new BigDecimal("19.25"),
+                "456 Oak Lane",
+                "ONLINE_CARD",
+                PaymentStatus.PAID,
+                OrderStatus.PENDING
+        );
+        savedOrder.setTransactionId("TXN-SANDBOX-12345");
+        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+
+        CheckoutRequest request = new CheckoutRequest("456 Oak Lane", "ONLINE_CARD", "TXN-SANDBOX-12345");
+        OrderResponse response = orderService.placeOrder("user-1", request);
+
+        assertNotNull(response);
+        assertEquals("order-202", response.getId());
+        assertEquals("ONLINE_CARD", response.getPaymentMethod());
+        assertEquals(PaymentStatus.PAID, response.getPaymentStatus());
+        assertEquals("TXN-SANDBOX-12345", response.getTransactionId());
+        verify(cartService, times(1)).clearCart("user-1");
+    }
+
+    @Test
     @DisplayName("Should reject order placement if an item becomes unavailable")
     void testPlaceOrderUnavailableItem() {
         activeCart.getItems().add(new CartItem("food-1", 1));

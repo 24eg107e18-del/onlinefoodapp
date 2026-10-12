@@ -116,6 +116,12 @@
                             <span>Payment Method</span>
                             <span>${order.paymentMethod} (${order.paymentStatus})</span>
                         </div>
+                        ${order.transactionId ? `
+                        <div class="summary-row">
+                            <span>Transaction Reference</span>
+                            <span style="font-family: monospace; font-weight: 600; color: var(--primary);">${order.transactionId}</span>
+                        </div>
+                        ` : ''}
                         <div class="summary-row summary-total">
                             <span>Total Paid / Due</span>
                             <span style="color: var(--primary);">${formatCurrency(order.totalAmount)}</span>

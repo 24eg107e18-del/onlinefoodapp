@@ -20,6 +20,7 @@ public class OrderResponse {
     private String paymentMethod;
     private PaymentStatus paymentStatus;
     private OrderStatus orderStatus;
+    private String transactionId;
     private Instant updatedAt;
 
     public OrderResponse() {
@@ -122,6 +123,14 @@ public class OrderResponse {
 
     public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
     }
 
     public Instant getUpdatedAt() {

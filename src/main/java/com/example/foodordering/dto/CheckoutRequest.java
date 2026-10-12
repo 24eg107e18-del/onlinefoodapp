@@ -11,12 +11,20 @@ public class CheckoutRequest {
 
     private String paymentMethod = "CASH_ON_DELIVERY";
 
+    private String transactionId;
+
     public CheckoutRequest() {
     }
 
     public CheckoutRequest(String deliveryAddress, String paymentMethod) {
         this.deliveryAddress = deliveryAddress;
         this.paymentMethod = paymentMethod != null ? paymentMethod : "CASH_ON_DELIVERY";
+    }
+
+    public CheckoutRequest(String deliveryAddress, String paymentMethod, String transactionId) {
+        this.deliveryAddress = deliveryAddress;
+        this.paymentMethod = paymentMethod != null ? paymentMethod : "CASH_ON_DELIVERY";
+        this.transactionId = transactionId;
     }
 
     public String getDeliveryAddress() {
@@ -33,5 +41,13 @@ public class CheckoutRequest {
 
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
     }
 }

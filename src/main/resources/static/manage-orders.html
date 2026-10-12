@@ -152,6 +152,10 @@
                         <span class="status-badge status-${order.paymentStatus}">
                             ${order.paymentStatus}
                         </span>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            ${order.paymentMethod || 'COD'}
+                            ${order.transactionId ? `<br><span style="font-family: monospace; font-size: 0.75rem; color: var(--text-secondary);">${order.transactionId}</span>` : ''}
+                        </div>
                     </td>
                     <td>
                         <span class="status-badge status-${order.orderStatus}">
