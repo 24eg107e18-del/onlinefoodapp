@@ -16,16 +16,16 @@ function Write-Step {
 
 function Write-Pass {
     param([string]$Message)
-    Write-Host "  ✔ $Message" -ForegroundColor Green
+    Write-Host "  [PASS] $Message" -ForegroundColor Green
 }
 
 function Write-Fail {
     param([string]$Message)
-    Write-Host "  ✖ $Message" -ForegroundColor Red
+    Write-Host "  [FAIL] $Message" -ForegroundColor Red
 }
 
 Write-Host "==========================================================" -ForegroundColor Yellow
-Write-Host "   🍕 CraveBite - Automated End-to-End API Test Suite     " -ForegroundColor Yellow
+Write-Host "   CraveBite - Automated End-to-End API Test Suite        " -ForegroundColor Yellow
 Write-Host "==========================================================" -ForegroundColor Yellow
 Write-Host "Target Base URL: $BaseUrl" -ForegroundColor Gray
 
@@ -115,7 +115,7 @@ $checkoutBody = @{
 
 $orderResponse = Invoke-RestMethod -Uri "$BaseUrl/orders" -Method Post -Headers $customerHeaders -Body $checkoutBody
 $orderId = $orderResponse.id
-Write-Pass "Order created successfully! (Order ID: #$orderId)"
+Write-Pass "Order created successfully! Order ID: $($orderId)"
 Write-Pass "Order Status: $($orderResponse.orderStatus) | Total Amount: `$$($orderResponse.totalAmount)"
 
 # Verify cart is now empty
@@ -156,7 +156,7 @@ try {
     foreach ($stage in $stages) {
         $statusBody = @{ status = $stage } | ConvertTo-Json
         $updatedOrder = Invoke-RestMethod -Uri "$BaseUrl/orders/$orderId/status" -Method Put -Headers $adminHeaders -Body $statusBody
-        Write-Pass "Advanced order #$orderId ➔ $stage"
+        Write-Pass "Advanced order $($orderId) -> $stage"
     }
 
     if ($updatedOrder.paymentStatus -eq "PAID") {
@@ -176,5 +176,5 @@ try {
 }
 
 Write-Host "`n==========================================================" -ForegroundColor Green
-Write-Host "   ✔ ALL END-TO-END WORKFLOW VERIFICATIONS PASSED!         " -ForegroundColor Green
+Write-Host "   [PASS] ALL END-TO-END WORKFLOW VERIFICATIONS PASSED!   " -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Green
