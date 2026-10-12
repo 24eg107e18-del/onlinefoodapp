@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CraveBite — Final Year Project Defense Presentation</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #ff5722;
+      --accent: #f97316;
+      --success: #10b981;
+      --border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Top Progress Bar */
+    .progress-bar-container {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Header Controls */
+    .slide-header {
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+    }
+
+    .brand {
+      font-weight: 700;
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand span {
+      color: var(--primary);
+    }
+
+    .slide-counter {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    /* Main Slide Stage */
+    .slide-stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem;
+      position: relative;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 1060px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      animation: fadeIn 0.35s ease;
+    }
+
+    .slide.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-tag {
+      display: inline-block;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--primary);
+      background: rgba(255, 87, 34, 0.12);
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+
+    .slide-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      color: #ffffff;
+      line-height: 1.25;
+    }
+
+    .slide-subtitle {
+      font-size: 1.05rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    /* Content Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.75rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+    }
+
+    .card-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+
+    .card-item h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #ffffff;
+    }
+
+    .card-item p, .card-item li {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    ul.bullet-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    ul.bullet-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.95rem;
+      color: #cbd5e1;
+    }
+
+    ul.bullet-list li::before {
+      content: '✔';
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .badge-pill {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(255, 87, 34, 0.15);
+      color: var(--primary);
+      margin-right: 0.4rem;
+      margin-bottom: 0.4rem;
+    }
+
+    /* Bottom Navigation Bar */
+    .slide-footer {
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+    }
+
+    .nav-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.6rem 1.4rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .keyboard-hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .keyboard-hint kbd {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="slide-header">
+    <div class="brand">🍕 Crave<span>Bite</span> <span style="font-size:0.85rem; color:var(--muted); font-weight:normal;">• Final Year Project Presentation</span></div>
+    <div class="slide-counter" id="slide-counter">Slide 1 / 15</div>
+  </header>
+
+  <!-- Slide Stage -->
+  <main class="slide-stage">
+
+    <!-- SLIDE 1: Title -->
+    <section class="slide active">
+      <span class="slide-tag">Final Year Project Defense • 2026</span>
+      <h1 class="slide-title">Online Food Ordering System</h1>
+      <p class="slide-subtitle">A Secure, Full-Stack Enterprise Web Application with Stateless JWT & Finite State Order Fulfillment</p>
+      
+      <div class="grid-2" style="margin-top: 2.5rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+        <div>
+          <div style="font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Candidate</div>
+          <div style="font-size: 1.15rem; font-weight: 700; margin-top: 0.25rem;">Bachelor of Technology / Computer Science</div>
+          <div style="font-size: 0.9rem; color: var(--muted);">Department of Computer Science & Engineering</div>
+        </div>
+        <div>
+          <div style="font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Core Stack</div>
+          <div style="margin-top: 0.35rem;">
+            <span class="badge-pill">Java 17 LTS</span>
+            <span class="badge-pill">Spring Boot 3.3.5</span>
+            <span class="badge-pill">Spring Data MongoDB</span>
+            <span class="badge-pill">Spring Security 6</span>
+            <span class="badge-pill">Vanilla JS (ES6+)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: Introduction & Motivation -->
+    <section class="slide">
+      <span class="slide-tag">1. Project Context</span>
+      <h2 class="slide-title">Introduction & Motivation</h2>
+      <p class="slide-subtitle">The rapid transition of the food service industry toward digital-first, contactless experiences.</p>
+
+      <div class="grid-3">
+        <div class="card-item">
+          <div style="font-size: 2rem; margin-bottom: 0.75rem;">📈</div>
+          <h3>Industry Growth</h3>
+          <p>Online food ordering has grown by over 300% globally, replacing phone orders with interactive, transparent mobile & web catalogs.</p>
+        </div>
+        <div class="card-item">
+          <div style="font-size: 2rem; margin-bottom: 0.75rem;">⚡</div>
+          <h3>Customer Convenience</h3>
+          <p>Instant search, category filters, allergen details, live delivery tracking, and transparent bill calculation.</p>
+        </div>
+        <div class="card-item">
+          <div style="font-size: 2rem; margin-bottom: 0.75rem;">📊</div>
+          <h3>Operational Efficiency</h3>
+          <p>Reduces restaurant overhead, eliminates order taking errors, and provides real-time revenue analytics for management.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: Problem Statement -->
+    <section class="slide">
+      <span class="slide-tag">2. Problem Statement</span>
+      <h2 class="slide-title">Legacy Systems vs. Modern Challenges</h2>
+      <p class="slide-subtitle">Why traditional manual ordering fails and how modern security vulnerabilities emerge.</p>
+
+      <div class="grid-2">
+        <div class="card-item" style="border-left: 4px solid #ef4444;">
+          <h3 style="color: #f87171;">Limitations of Existing Systems</h3>
+          <ul class="bullet-list" style="margin-top: 1rem;">
+            <li style="color: #cbd5e1;"><strong>Manual Billing Errors:</strong> Phone orders lead to incorrect prices and lost tickets.</li>
+            <li style="color: #cbd5e1;"><strong>Lack of Live Tracking:</strong> Customers have no visibility into preparation status.</li>
+            <li style="color: #cbd5e1;"><strong>Security Flaws:</strong> Insecure client-side pricing where users manipulate cart totals.</li>
+            <li style="color: #cbd5e1;"><strong>High Overhead:</strong> Third-party aggregators charge 25-35% commission fees.</li>
+          </ul>
+        </div>
+        <div class="card-item" style="border-left: 4px solid var(--success);">
+          <h3 style="color: #34d399;">Proposed Solution: CraveBite</h3>
+          <ul class="bullet-list" style="margin-top: 1rem;">
+            <li style="color: #cbd5e1;"><strong>Zero Third-Party Fees:</strong> Independent, direct restaurant-to-customer platform.</li>
+            <li style="color: #cbd5e1;"><strong>Server-Side Financial Integrity:</strong> 100% backend recalculation of taxes and subtotals.</li>
+            <li style="color: #cbd5e1;"><strong>Finite State Machine:</strong> Strictly validated order fulfillment pipeline.</li>
+            <li style="color: #cbd5e1;"><strong>Stateless JWT Security:</strong> Modern, horizontally scalable authentication.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: System Architecture -->
+    <section class="slide">
+      <span class="slide-tag">3. System Design</span>
+      <h2 class="slide-title">High-Level 3-Tier Architecture</h2>
+      <p class="slide-subtitle">Decoupled separation of concerns between presentation, business logic, and document persistence.</p>
+
+      <div class="grid-3">
+        <div class="card-item">
+          <div style="color: var(--primary); font-weight: 700; margin-bottom: 0.5rem;">TIER 1: PRESENTATION</div>
+          <h3>Client Layer</h3>
+          <p style="margin-bottom: 0.75rem;">17 Responsive HTML5 Pages, Custom Warm Theme CSS, Vanilla JS ES6 modules.</p>
+          <div class="badge-pill">Fetch API</div>
+          <div class="badge-pill">JWT Bearer</div>
+          <div class="badge-pill">Zero Bloat</div>
+        </div>
+
+        <div class="card-item">
+          <div style="color: var(--accent); font-weight: 700; margin-bottom: 0.5rem;">TIER 2: APPLICATION</div>
+          <h3>Business & Security</h3>
+          <p style="margin-bottom: 0.75rem;">Spring Boot 3.3.5 REST Controllers, Service Layer, Spring Security 6 Filter Chain.</p>
+          <div class="badge-pill">@Valid DTOs</div>
+          <div class="badge-pill">BCrypt</div>
+          <div class="badge-pill">State Machine</div>
+        </div>
+
+        <div class="card-item">
+          <div style="color: var(--success); font-weight: 700; margin-bottom: 0.5rem;">TIER 3: DATA TIER</div>
+          <h3>Document Database</h3>
+          <p style="margin-bottom: 0.75rem;">MongoDB Engine, Spring Data Repositories, BSON Document serialization.</p>
+          <div class="badge-pill">Mongo 7.0</div>
+          <div class="badge-pill">Embedded Arrays</div>
+          <div class="badge-pill">Indexed Queries</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Technology Stack -->
+    <section class="slide">
+      <span class="slide-tag">4. Technology Stack</span>
+      <h2 class="slide-title">Technology Selection & Justification</h2>
+      <p class="slide-subtitle">Industry-standard tools selected for scalability, performance, and long-term maintainability.</p>
+
+      <div class="grid-2">
+        <div class="card-item">
+          <h3>Backend & Security</h3>
+          <ul class="bullet-list" style="margin-top: 0.75rem;">
+            <li><strong>Java 17 LTS:</strong> Modern language features (Records, pattern matching, strong typing).</li>
+            <li><strong>Spring Boot 3.3.5:</strong> Rapid enterprise microservices framework with embedded Tomcat.</li>
+            <li><strong>Spring Security 6:</strong> Declarative method-level security and filter-chain interceptors.</li>
+            <li><strong>JJWT 0.12.6:</strong> Industry-standard cryptographic token signing (HMAC-SHA256).</li>
+          </ul>
+        </div>
+        <div class="card-item">
+          <h3>Database & Client</h3>
+          <ul class="bullet-list" style="margin-top: 0.75rem;">
+            <li><strong>MongoDB:</strong> Flexible document store suited for nested food orders and categories.</li>
+            <li><strong>Vanilla JavaScript (ES6+):</strong> Zero external dependencies, instant page load speeds.</li>
+            <li><strong>Docker & Compose:</strong> Reproducible containerized execution for local and cloud environments.</li>
+            <li><strong>JUnit 5 & Mockito:</strong> Robust unit testing suite with 28 automated verifications.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: Database Models & ER -->
+    <section class="slide">
+      <span class="slide-tag">5. Data Architecture</span>
+      <h2 class="slide-title">MongoDB Schema & Snapshot Pattern</h2>
+      <p class="slide-subtitle">How documents are structured and how historical financial integrity is maintained.</p>
+
+      <div class="grid-2">
+        <div class="card-item">
+          <h3>Core Collections</h3>
+          <div style="margin-top: 0.75rem; font-size: 0.88rem; color: #cbd5e1; line-height: 1.8;">
+            📁 <strong>users:</strong> id, name, email (unique), passwordHash, phone, address, role<br>
+            📁 <strong>categories:</strong> id, name, description, imageUrl, active<br>
+            📁 <strong>food_items:</strong> id, name, categoryId, price, available, imageUrl<br>
+            📁 <strong>carts:</strong> id, customerId, items: [{foodItemId, quantity}]<br>
+            📁 <strong>orders:</strong> id, customerId, customerName, totalAmount, orderStatus, items: [...]
+          </div>
+        </div>
+
+        <div class="card-item">
+          <h3 style="color: var(--primary);">The Snapshot Pricing Pattern</h3>
+          <p style="margin-top: 0.5rem;">
+            If food items simply referenced <code style="color:var(--accent);">foodItemId</code>, changing a dish price tomorrow would retrospectively corrupt yesterday's customer receipts.
+          </p>
+          <div style="margin-top: 0.75rem; background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; font-size: 0.82rem; font-family: monospace;">
+            OrderItem {<br>
+            &nbsp;&nbsp;foodItemId, foodName, <strong>unitPrice</strong>, quantity, lineTotal<br>
+            }
+          </div>
+          <p style="margin-top: 0.5rem; font-size: 0.85rem;">
+            Snapshots freeze exact prices at checkout for audit and accounting consistency.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: Security & JWT -->
+    <section class="slide">
+      <span class="slide-tag">6. Application Security</span>
+      <h2 class="slide-title">Stateless Authentication & Authorization</h2>
+      <p class="slide-subtitle">Zero server-side sessions, encrypted passwords, and multi-tenant isolation.</p>
+
+      <div class="grid-3">
+        <div class="card-item">
+          <h3>1. Password Hashing</h3>
+          <p>BCrypt encryption with cryptographically random salting. Passwords and hashes are never exposed in DTO responses or client storage.</p>
+        </div>
+        <div class="card-item">
+          <h3>2. Stateless JWT</h3>
+          <p>Tokens signed with HS256 containing user ID and Role. Injected into every authorized request via <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+        </div>
+        <div class="card-item">
+          <h3>3. Authorization Matrix</h3>
+          <p>Strict role check: Public for browsing, <code>CUSTOMER</code> for cart/checkout, and <code>ADMIN</code> for menu/status management. Customers cannot access other users' orders.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: Order Finite State Machine -->
+    <section class="slide">
+      <span class="slide-tag">7. Core Business Logic</span>
+      <h2 class="slide-title">Order Lifecycle State Machine (FSM)</h2>
+      <p class="slide-subtitle">Preventing illegal state transitions and ensuring order fulfillment integrity.</p>
+
+      <div class="card-item" style="margin-bottom: 1.5rem; text-align: center; padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 700; flex-wrap: wrap; gap: 0.5rem;">
+          <span style="color: var(--accent);">[1] PENDING</span> ➔
+          <span style="color: #60a5fa;">[2] CONFIRMED</span> ➔
+          <span style="color: #a78bfa;">[3] PREPARING</span> ➔
+          <span style="color: #38bdf8;">[4] OUT_FOR_DELIVERY</span> ➔
+          <span style="color: var(--success);">[5] DELIVERED</span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card-item">
+          <h3>Allowed Transitions</h3>
+          <ul class="bullet-list" style="margin-top: 0.5rem;">
+            <li>PENDING can move to CONFIRMED or CANCELLED</li>
+            <li>PREPARING can move to OUT_FOR_DELIVERY or CANCELLED</li>
+            <li>OUT_FOR_DELIVERY can move to DELIVERED</li>
+          </ul>
+        </div>
+        <div class="card-item">
+          <h3 style="color: #f87171;">Terminal State Enforcement</h3>
+          <ul class="bullet-list" style="margin-top: 0.5rem;">
+            <li><strong>DELIVERED:</strong> Terminal state. Automatically sets payment status to PAID for COD.</li>
+            <li><strong>CANCELLED:</strong> Terminal state. Cannot be reopened.</li>
+            <li>Illegal jumps (e.g. DELIVERED ➔ PENDING) throw <code>InvalidStatusTransitionException (400)</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: Customer Experience Walkthrough -->
+    <section class="slide">
+      <span class="slide-tag">8. Feature Walkthrough</span>
+      <h2 class="slide-title">Customer Experience Flow</h2>
+      <p class="slide-subtitle">A seamless journey from appetite discovery to delivery arrival.</p>
+
+      <div class="grid-4">
+        <div class="card-item">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍</div>
+          <h3>1. Discovery</h3>
+          <p>Browse menus with debounced search and category filter chips.</p>
+        </div>
+        <div class="card-item">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🛒</div>
+          <h3>2. Cart</h3>
+          <p>Add dishes, modify quantities, and unlock free delivery thresholds.</p>
+        </div>
+        <div class="card-item">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💳</div>
+          <h3>3. Checkout</h3>
+          <p>Review pre-filled addresses and confirm Cash on Delivery.</p>
+        </div>
+        <div class="card-item">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🚚</div>
+          <h3>4. Live Tracker</h3>
+          <p>Track order progress in real-time through an interactive 5-step stepper.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: Admin Dashboard Walkthrough -->
+    <section class="slide">
+      <span class="slide-tag">9. Administrator Experience</span>
+      <h2 class="slide-title">Restaurant Control Center</h2>
+      <p class="slide-subtitle">Equipping management with operational intelligence and complete menu governance.</p>
+
+      <div class="grid-3">
+        <div class="card-item">
+          <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">📊</div>
+          <h3>Executive Metrics</h3>
+          <p>Gross revenue calculations, order volume, active customer counts, and kitchen pipeline status distribution.</p>
+        </div>
+        <div class="card-item">
+          <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">🍔</div>
+          <h3>Menu & Category CRUD</h3>
+          <p>Interactive modals to add new dishes, adjust prices, toggle in-stock availability, and manage categories.</p>
+        </div>
+        <div class="card-item">
+          <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">⚙️</div>
+          <h3>Fulfillment Workflow</h3>
+          <p>Process customer orders, update delivery progress via dropdowns, and inspect customer delivery addresses.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 11: Testing & Verification -->
+    <section class="slide">
+      <span class="slide-tag">10. Software Quality & Testing</span>
+      <h2 class="slide-title">Automated Testing & Build Verification</h2>
+      <p class="slide-subtitle">A thoroughly tested codebase verified across compilation, unit, and integration tiers.</p>
+
+      <div class="grid-2">
+        <div class="card-item">
+          <h3>Test Suite Statistics</h3>
+          <div style="margin: 1rem 0; font-size: 2.2rem; font-weight: 800; color: var(--success);">
+            28 / 28 Tests Passed (100%)
+          </div>
+          <p style="font-size: 0.9rem;">
+            Covering Auth, Cart calculations, Order placement, Snapshots, Security authorization, and REST controllers.
+          </p>
+        </div>
+
+        <div class="card-item">
+          <h3>Testing Frameworks Used</h3>
+          <ul class="bullet-list" style="margin-top: 0.75rem;">
+            <li><strong>JUnit 5 & Mockito:</strong> Mocked repositories allowing instant unit testing without external database dependencies.</li>
+            <li><strong>MockMvc:</strong> HTTP slice testing verifying status codes (201, 400, 409).</li>
+            <li><strong>ByteBuddy Dynamic Agent:</strong> Configured in Surefire for full compatibility with modern JDK runtimes.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 12: Live Demo Script -->
+    <section class="slide">
+      <span class="slide-tag">11. Demonstration Script</span>
+      <h2 class="slide-title">Demonstration Workflow for Evaluators</h2>
+      <p class="slide-subtitle">Five key steps to demonstrate during the live project viva.</p>
+
+      <div class="card-item">
+        <ol style="margin-left: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; color: #cbd5e1; font-size: 0.95rem;">
+          <li><strong>Step 1 (Catalog Browsing):</strong> Open <code>index.html</code> and <code>menu.html</code>; demonstrate debounced search and category filtering.</li>
+          <li><strong>Step 2 (Cart Management):</strong> Add items to cart; demonstrate server-side recalculation, quantity changes, and free delivery thresholds.</li>
+          <li><strong>Step 3 (Checkout & Placement):</strong> Complete order via Cash on Delivery; verify price snapshotting and cart clearance.</li>
+          <li><strong>Step 4 (Live Tracker):</strong> Open <code>order-tracking.html</code> to showcase the 5-step visual fulfillment stepper.</li>
+          <li><strong>Step 5 (Admin Portal):</strong> Log in as Administrator to <code>admin-dashboard.html</code>; advance the order status and observe real-time tracker updates.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SLIDE 13: Project Advantages -->
+    <section class="slide">
+      <span class="slide-tag">12. Results & Impact</span>
+      <h2 class="slide-title">Key Architectural Advantages</h2>
+      <p class="slide-subtitle">How this implementation demonstrates professional-grade engineering principles.</p>
+
+      <div class="grid-3">
+        <div class="card-item">
+          <h3>🛡️ Robust Security</h3>
+          <p>Zero client trust. Client-submitted prices and IDs are ignored; identity is resolved strictly from verified JWT tokens.</p>
+        </div>
+        <div class="card-item">
+          <h3>⚡ High Performance</h3>
+          <p>No heavy frontend frameworks (React/Angular); pure Vanilla JS and optimized CSS load in milliseconds.</p>
+        </div>
+        <div class="card-item">
+          <h3>📦 Cloud-Ready</h3>
+          <p>Packaged with a multi-stage Dockerfile, Docker Compose, and dynamic port binding ready for Render or AWS.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 14: Future Enhancements -->
+    <section class="slide">
+      <span class="slide-tag">13. Future Scope</span>
+      <h2 class="slide-title">Future Enhancements & Scalability</h2>
+      <p class="slide-subtitle">Planned additions to extend the platform into commercial multi-vendor operations.</p>
+
+      <div class="grid-2">
+        <div class="card-item">
+          <h3>Upcoming Capabilities</h3>
+          <ul class="bullet-list" style="margin-top: 0.75rem;">
+            <li><strong>Payment Gateways:</strong> Integration with Stripe, Razorpay, and PayPal webhooks.</li>
+            <li><strong>Real-Time WebSockets:</strong> Push instant order status updates directly to customer screens without polling.</li>
+            <li><strong>Push Notifications:</strong> SMS / WhatsApp alerts via Twilio on order dispatch.</li>
+          </ul>
+        </div>
+        <div class="card-item">
+          <h3>Architectural Extensions</h3>
+          <ul class="bullet-list" style="margin-top: 0.75rem;">
+            <li><strong>Multi-Tenancy:</strong> Support multi-restaurant platforms with individual vendor dashboards.</li>
+            <li><strong>Mobile Apps:</strong> Flutter / React Native clients consuming the existing REST API.</li>
+            <li><strong>AI Recommendations:</strong> Collaborative filtering to suggest paired dishes and desserts.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 15: Conclusion & Q&A -->
+    <section class="slide">
+      <span class="slide-tag">14. Conclusion</span>
+      <h2 class="slide-title">Conclusion & Viva Voce Q&A</h2>
+      <p class="slide-subtitle">Thank you for your time and evaluation.</p>
+
+      <div class="card-item" style="text-align: center; padding: 2.5rem; margin-top: 1.5rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🎓</div>
+        <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #ffffff;">Ready for Technical Questions</h3>
+        <p style="color: var(--muted); max-width: 600px; margin: 0 auto;">
+          The system fulfills all software engineering specifications, demonstrates secure stateless architecture, and is ready for live evaluation.
+        </p>
+        <div style="margin-top: 1.5rem;">
+          <a href="/index.html" target="_blank" style="display: inline-block; background: var(--primary); color: white; padding: 0.6rem 1.4rem; border-radius: 10px; text-decoration: none; font-weight: 600;">
+            🚀 Open Live Storefront
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer Navigation -->
+  <footer class="slide-footer">
+    <div class="keyboard-hint">
+      Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> Arrow Keys or <kbd>Space</kbd> to navigate
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <button class="nav-btn" id="prev-btn" onclick="prevSlide()" disabled>&larr; Previous</button>
+      <button class="nav-btn" id="next-btn" onclick="nextSlide()">Next &rarr;</button>
+    </div>
+  </footer>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const counter = document.getElementById('slide-counter');
+    const progressBar = document.getElementById('progress-bar');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    function updateSlide() {
+      slides.forEach((slide, idx) => {
+        slide.classList.toggle('active', idx === currentSlide);
+      });
+
+      counter.textContent = `Slide ${currentSlide + 1} / ${totalSlides}`;
+      progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+
+      prevBtn.disabled = currentSlide === 0;
+      nextBtn.disabled = currentSlide === totalSlides - 1;
+      nextBtn.textContent = currentSlide === totalSlides - 1 ? 'End' : 'Next →';
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'Home') {
+        currentSlide = 0;
+        updateSlide();
+      } else if (e.key === 'End') {
+        currentSlide = totalSlides - 1;
+        updateSlide();
+      }
+    });
+
+    updateSlide();
+  </script>
+</body>
+</html>
