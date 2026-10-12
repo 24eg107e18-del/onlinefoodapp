@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Food Items — CraveBite Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/admin-dashboard.html" class="brand-logo">
+                <div class="brand-icon">👑</div>
+                <div class="brand-name">Crave<span>Admin</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-user-actions"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="section-header">
+            <div>
+                <h1 class="section-title">Food Menu Inventory</h1>
+                <p class="section-subtitle">Add, modify pricing, toggle stock availability, or remove dishes</p>
+            </div>
+            <button id="open-add-food-btn" class="btn btn-primary btn-sm">
+                + Add New Food Item
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Dish</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Last Updated</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="food-table-tbody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                                Loading food items...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add / Edit Food Modal -->
+        <div class="modal-backdrop" id="food-modal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="food-modal-title">Add Food Item</h2>
+                    <button class="modal-close" id="food-modal-close">&times;</button>
+                </div>
+
+                <form id="food-modal-form">
+                    <input type="hidden" id="food-id-input">
+
+                    <div class="form-group">
+                        <label class="form-label" for="food-name-input">Food Name *</label>
+                        <input type="text" id="food-name-input" class="form-control" required placeholder="e.g. Truffle Mushroom Pizza">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="food-category-select">Category *</label>
+                        <select id="food-category-select" class="form-control" required>
+                            <option value="">Select a category</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="food-price-input">Price ($) *</label>
+                        <input type="number" id="food-price-input" class="form-control" step="0.01" min="0.01" required placeholder="e.g. 14.99">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="food-image-input">Image URL</label>
+                        <input type="url" id="food-image-input" class="form-control" placeholder="https://images.unsplash.com/...">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="food-desc-input">Description</label>
+                        <textarea id="food-desc-input" class="form-control" rows="3" placeholder="List ingredients, flavor notes, special recipes..."></textarea>
+                    </div>
+
+                    <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="food-available-input" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
+                        <label for="food-available-input" style="font-weight: 600; cursor: pointer;">Available for Ordering (In Stock)</label>
+                    </div>
+
+                    <div id="food-modal-error" style="display: none; color: var(--danger); background: var(--danger-light); padding: 0.6rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.88rem;"></div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" id="food-modal-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="food-modal-save">Save Food Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            &copy; 2026 CraveBite Online Food Ordering System — Administrator Console.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { formatCurrency, formatDate, showToast } from '/js/main.js';
+
+        if (!authStorage.isAuthenticated() || !authStorage.isAdmin()) {
+            window.location.href = '/admin-login.html';
+        }
+
+        let allCategories = [];
+        let allFoods = [];
+
+        const tbody = document.getElementById('food-table-tbody');
+        const modal = document.getElementById('food-modal');
+        const modalTitle = document.getElementById('food-modal-title');
+        const modalForm = document.getElementById('food-modal-form');
+        const modalError = document.getElementById('food-modal-error');
+        const categorySelect = document.getElementById('food-category-select');
+
+        async function init() {
+            try {
+                allCategories = await api.categories.getAll();
+                categorySelect.innerHTML = '<option value="">Select a category</option>' +
+                    allCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+                await loadFoods();
+            } catch (err) {
+                console.error(err);
+                showToast('Error initializing data: ' + err.message, 'error');
+            }
+        }
+
+        async function loadFoods() {
+            try {
+                allFoods = await api.foods.getAll();
+                renderTable();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);">${err.message}</td></tr>`;
+            }
+        }
+
+        function renderTable() {
+            if (allFoods.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                            No dishes found. Click "+ Add New Food Item" above to create one.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = allFoods.map(food => `
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.85rem;">
+                            <img src="${food.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'}"
+                                 alt="${food.name}"
+                                 style="width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover;"
+                                 onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'">
+                            <div>
+                                <strong style="font-size: 0.95rem;">${food.name}</strong>
+                                <div style="color: var(--text-muted); font-size: 0.82rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    ${food.description || 'No description provided'}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="status-badge" style="background: var(--bg-subtle); color: var(--text-secondary);">${food.categoryName}</span></td>
+                    <td style="font-weight: 700; color: var(--primary);">${formatCurrency(food.price)}</td>
+                    <td>
+                        <span class="status-badge ${food.available ? 'badge-available' : 'badge-unavailable'}">
+                            ${food.available ? 'In Stock' : 'Out of Stock'}
+                        </span>
+                    </td>
+                    <td style="font-size: 0.82rem; color: var(--text-muted);">${formatDate(food.updatedAt || food.createdAt)}</td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-secondary btn-sm edit-food-btn" data-id="${food.id}" style="padding: 0.25rem 0.6rem; margin-right: 0.35rem;">
+                            ✏️ Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm delete-food-btn" data-id="${food.id}" data-name="${food.name}" style="padding: 0.25rem 0.6rem;">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Edit Listeners
+            tbody.querySelectorAll('.edit-food-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    const food = allFoods.find(f => f.id === id);
+                    if (food) openModal(food);
+                });
+            });
+
+            // Delete Listeners
+            tbody.querySelectorAll('.delete-food-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.getAttribute('data-id');
+                    const name = btn.getAttribute('data-name');
+                    if (confirm(`Are you sure you want to permanently delete "${name}"?`)) {
+                        try {
+                            await api.foods.delete(id);
+                            showToast(`Deleted "${name}"`, 'success');
+                            loadFoods();
+                        } catch (err) {
+                            showToast(err.message || 'Error deleting food item', 'error');
+                        }
+                    }
+                });
+            });
+        }
+
+        function openModal(food = null) {
+            modalError.style.display = 'none';
+            if (food) {
+                modalTitle.textContent = 'Edit Food Item';
+                document.getElementById('food-id-input').value = food.id;
+                document.getElementById('food-name-input').value = food.name;
+                document.getElementById('food-category-select').value = food.categoryId;
+                document.getElementById('food-price-input').value = food.price;
+                document.getElementById('food-image-input').value = food.imageUrl || '';
+                document.getElementById('food-desc-input').value = food.description || '';
+                document.getElementById('food-available-input').checked = food.available;
+            } else {
+                modalTitle.textContent = 'Add New Food Item';
+                modalForm.reset();
+                document.getElementById('food-id-input').value = '';
+                document.getElementById('food-available-input').checked = true;
+            }
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            modal.classList.remove('show');
+        }
+
+        document.getElementById('open-add-food-btn').addEventListener('click', () => openModal(null));
+        document.getElementById('food-modal-close').addEventListener('click', closeModal);
+        document.getElementById('food-modal-cancel').addEventListener('click', closeModal);
+
+        modalForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            modalError.style.display = 'none';
+
+            const id = document.getElementById('food-id-input').value;
+            const name = document.getElementById('food-name-input').value.trim();
+            const categoryId = document.getElementById('food-category-select').value;
+            const price = parseFloat(document.getElementById('food-price-input').value);
+            const imageUrl = document.getElementById('food-image-input').value.trim();
+            const description = document.getElementById('food-desc-input').value.trim();
+            const available = document.getElementById('food-available-input').checked;
+
+            const payload = {
+                name,
+                categoryId,
+                price,
+                imageUrl: imageUrl || null,
+                description: description || null,
+                available
+            };
+
+            const saveBtn = document.getElementById('food-modal-save');
+
+            try {
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+
+                if (id) {
+                    await api.foods.update(id, payload);
+                    showToast(`Updated "${name}"`, 'success');
+                } else {
+                    await api.foods.create(payload);
+                    showToast(`Created new dish "${name}"`, 'success');
+                }
+
+                closeModal();
+                loadFoods();
+            } catch (err) {
+                modalError.textContent = err.message || 'Error saving dish';
+                modalError.style.display = 'block';
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Food Item';
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

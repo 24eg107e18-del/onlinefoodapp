@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Customers — CraveBite Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/admin-dashboard.html" class="brand-logo">
+                <div class="brand-icon">👑</div>
+                <div class="brand-name">Crave<span>Admin</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-user-actions"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="section-header">
+            <div>
+                <h1 class="section-title">Registered Customers</h1>
+                <p class="section-subtitle">View customer profiles, contacts and ordering locations</p>
+            </div>
+            <a href="/admin-dashboard.html" class="btn btn-secondary btn-sm">&larr; Back to Dashboard</a>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Email Address</th>
+                            <th>Phone</th>
+                            <th>Default Delivery Address</th>
+                            <th>Role</th>
+                            <th>Joined On</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customers-table-tbody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                Loading customers...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            &copy; 2026 CraveBite Online Food Ordering System — Administrator Console.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { formatDate, showToast } from '/js/main.js';
+
+        if (!authStorage.isAuthenticated() || !authStorage.isAdmin()) {
+            window.location.href = '/admin-login.html';
+        }
+
+        const tbody = document.getElementById('customers-table-tbody');
+
+        async function loadCustomers() {
+            try {
+                const response = await api.admin.getUsers();
+                const users = Array.isArray(response) ? response : (response?.content || []);
+
+                if (users.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                No customers registered yet.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                    ${user.name ? user.name.charAt(0).toUpperCase() : 'C'}
+                                </div>
+                                <strong>${user.name}</strong>
+                            </div>
+                        </td>
+                        <td>${user.email}</td>
+                        <td>${user.phone || '<span style="color: var(--text-muted);">Not provided</span>'}</td>
+                        <td style="max-width: 260px; font-size: 0.88rem;">${user.address || '<span style="color: var(--text-muted);">No address saved</span>'}</td>
+                        <td><span class="status-badge" style="background: var(--bg-subtle); color: var(--text-secondary);">${user.role}</span></td>
+                        <td style="font-size: 0.85rem; color: var(--text-muted);">${formatDate(user.createdAt)}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);">${err.message}</td></tr>`;
+            }
+        }
+
+        loadCustomers();
+    </script>
+</body>
+</html>

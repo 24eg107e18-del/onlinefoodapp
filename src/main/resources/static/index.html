@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CraveBite — Fresh Food Delivered Fast</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/index.html" class="brand-logo">
+                <div class="brand-icon">🍕</div>
+                <div class="brand-name">Crave<span>Bite</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-user-actions"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-text">
+                <span class="hero-tag">🔥 Fresh & Fast Delivery</span>
+                <h1 class="hero-title">Delicious Meals, <span>Delivered Straight</span> to You.</h1>
+                <p class="hero-desc">Explore hand-crafted pizzas, gourmet burgers, aromatic biryanis and decadent desserts from our kitchen to your table.</p>
+                <div class="hero-actions">
+                    <a href="/menu.html" class="btn btn-primary btn-lg">Explore Full Menu</a>
+                    <a href="#featured-section" class="btn btn-outline btn-lg">View Specials</a>
+                </div>
+            </div>
+            <div class="hero-image-wrap">
+                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=700&auto=format&fit=crop&q=80"
+                     alt="Delicious Table Feast" class="hero-image"
+                     onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=700&auto=format&fit=crop&q=80'">
+            </div>
+        </section>
+
+        <!-- Category Showcase -->
+        <section style="margin-bottom: 2.5rem;">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Browse By Category</h2>
+                    <p class="section-subtitle">Pick your favorite craving from our freshly curated categories</p>
+                </div>
+                <a href="/menu.html" class="btn btn-outline btn-sm">All Categories &rarr;</a>
+            </div>
+            <div class="category-chips" id="home-categories-list">
+                <span style="color: var(--text-muted); font-size: 0.9rem;">Loading categories...</span>
+            </div>
+        </section>
+
+        <!-- Featured Food Items -->
+        <section id="featured-section" style="margin-bottom: 3.5rem;">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Popular & Featured Dishes</h2>
+                    <p class="section-subtitle">Customer top choices prepared fresh on every single order</p>
+                </div>
+                <a href="/menu.html" class="btn btn-primary btn-sm">See Full Menu</a>
+            </div>
+
+            <div class="food-grid" id="featured-foods-grid">
+                <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-muted);">
+                    Loading delicious dishes...
+                </div>
+            </div>
+        </section>
+
+        <!-- Highlights Banner -->
+        <section class="card" style="background: var(--bg-surface); padding: 2.5rem; margin-bottom: 3rem; text-align: center;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem;">
+                <div>
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⏱️</div>
+                    <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">Express 30-Min Delivery</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.88rem;">Piping hot food delivered straight to your doorstep within minutes.</p>
+                </div>
+                <div>
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🥗</div>
+                    <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">100% Fresh Ingredients</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.88rem;">Cooked daily with farm-fresh produce, authentic spices, and zero compromise.</p>
+                </div>
+                <div>
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🛡️</div>
+                    <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">Secure & Contactless</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.88rem;">Hygienic safety-sealed packaging and reliable Cash on Delivery.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-grid">
+            <div>
+                <div class="footer-brand">🍕 CraveBite</div>
+                <p class="footer-desc">A modern, secure Online Food Ordering System crafted with Spring Boot, MongoDB and Vanilla JavaScript.</p>
+            </div>
+            <div>
+                <h4 class="footer-heading">Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="/menu.html">Explore Menu</a></li>
+                    <li><a href="/cart.html">View Cart</a></li>
+                    <li><a href="/my-orders.html">My Orders</a></li>
+                    <li><a href="/profile.html">My Profile</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="footer-heading">Support</h4>
+                <ul class="footer-links">
+                    <li><a href="mailto:support@cravebite.com">Email Support</a></li>
+                    <li><a href="/admin-login.html">Admin Portal</a></li>
+                    <li><a href="/api/health" target="_blank">System Health</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="footer-heading">Restaurant Hours</h4>
+                <p class="footer-desc">Monday – Sunday<br>10:00 AM – 11:30 PM<br>Express delivery available 7 days a week.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 CraveBite Online Food Ordering System. All rights reserved. Built for College Project Viva & Production Demonstration.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { formatCurrency, showToast, refreshCartCount } from '/js/main.js';
+
+        async function initHomePage() {
+            try {
+                // Load Categories
+                const categories = await api.categories.getAll(true);
+                const categoriesContainer = document.getElementById('home-categories-list');
+                if (categories && categories.length > 0) {
+                    categoriesContainer.innerHTML = categories.map(cat => `
+                        <a href="/menu.html?category=${cat.id}" class="category-chip">
+                            ${cat.name}
+                        </a>
+                    `).join('');
+                } else {
+                    categoriesContainer.innerHTML = `<span style="color: var(--text-muted); font-size: 0.9rem;">No categories available yet.</span>`;
+                }
+
+                // Load Featured Food Items
+                const foods = await api.foods.getAll({ available: true });
+                const foodsGrid = document.getElementById('featured-foods-grid');
+                if (foods && foods.length > 0) {
+                    // Show up to 6 featured items
+                    const featured = foods.slice(0, 6);
+                    foodsGrid.innerHTML = featured.map(food => `
+                        <div class="food-card">
+                            <div class="food-card-img-wrap">
+                                <img src="${food.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'}"
+                                     alt="${food.name}"
+                                     class="food-card-img"
+                                     onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'">
+                                <span class="food-card-badge ${food.available ? 'badge-available' : 'badge-unavailable'}">
+                                    ${food.available ? 'Available' : 'Sold Out'}
+                                </span>
+                            </div>
+                            <div class="food-card-body">
+                                <span class="food-card-category">${food.categoryName || 'Special'}</span>
+                                <a href="/food-details.html?id=${food.id}" class="food-card-title">${food.name}</a>
+                                <p class="food-card-desc">${food.description || 'Prepared fresh with chef signature seasoning.'}</p>
+                                <div class="food-card-footer">
+                                    <div class="food-card-price">${formatCurrency(food.price)}</div>
+                                    <button class="btn btn-primary btn-sm add-to-cart-btn" data-id="${food.id}" data-name="${food.name}">
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // Attach add to cart listeners
+                    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            const foodId = btn.getAttribute('data-id');
+                            const foodName = btn.getAttribute('data-name');
+                            if (!authStorage.isAuthenticated()) {
+                                showToast('Please log in to add items to your cart.', 'info');
+                                setTimeout(() => window.location.href = '/login.html', 1200);
+                                return;
+                            }
+                            try {
+                                btn.disabled = true;
+                                btn.textContent = 'Adding...';
+                                await api.cart.add(foodId, 1);
+                                showToast(`Added "${foodName}" to cart!`, 'success');
+                                refreshCartCount();
+                            } catch (err) {
+                                showToast(err.message || 'Failed to add item to cart', 'error');
+                            } finally {
+                                btn.disabled = false;
+                                btn.textContent = 'Add to Cart';
+                            }
+                        });
+                    });
+                } else {
+                    foodsGrid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-muted);">
+                            No food items found. Please check back shortly or configure menu in the admin dashboard.
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('featured-foods-grid').innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--danger);">
+                        Unable to connect to the backend server. Please verify Spring Boot and MongoDB are running.
+                    </div>
+                `;
+            }
+        }
+
+        initHomePage();
+    </script>
+</body>
+</html>

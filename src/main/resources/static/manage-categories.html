@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Categories — CraveBite Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/admin-dashboard.html" class="brand-logo">
+                <div class="brand-icon">👑</div>
+                <div class="brand-name">Crave<span>Admin</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-user-actions"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="section-header">
+            <div>
+                <h1 class="section-title">Food Categories</h1>
+                <p class="section-subtitle">Organize menu groupings, activate or deactivate food sections</p>
+            </div>
+            <button id="open-add-cat-btn" class="btn btn-primary btn-sm">
+                + Add New Category
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="category-table-tbody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                                Loading categories...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add / Edit Category Modal -->
+        <div class="modal-backdrop" id="cat-modal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="cat-modal-title">Add Food Category</h2>
+                    <button class="modal-close" id="cat-modal-close">&times;</button>
+                </div>
+
+                <form id="cat-modal-form">
+                    <input type="hidden" id="cat-id-input">
+
+                    <div class="form-group">
+                        <label class="form-label" for="cat-name-input">Category Name *</label>
+                        <input type="text" id="cat-name-input" class="form-control" required placeholder="e.g. Pizza & Italian">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="cat-image-input">Banner Image URL</label>
+                        <input type="url" id="cat-image-input" class="form-control" placeholder="https://images.unsplash.com/...">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="cat-desc-input">Description</label>
+                        <textarea id="cat-desc-input" class="form-control" rows="3" placeholder="Brief summary of foods belonging in this category"></textarea>
+                    </div>
+
+                    <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="cat-active-input" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
+                        <label for="cat-active-input" style="font-weight: 600; cursor: pointer;">Active & Visible in Customer Menu</label>
+                    </div>
+
+                    <div id="cat-modal-error" style="display: none; color: var(--danger); background: var(--danger-light); padding: 0.6rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.88rem;"></div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" id="cat-modal-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="cat-modal-save">Save Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            &copy; 2026 CraveBite Online Food Ordering System — Administrator Console.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { formatDate, showToast } from '/js/main.js';
+
+        if (!authStorage.isAuthenticated() || !authStorage.isAdmin()) {
+            window.location.href = '/admin-login.html';
+        }
+
+        let categories = [];
+        const tbody = document.getElementById('category-table-tbody');
+        const modal = document.getElementById('cat-modal');
+        const modalTitle = document.getElementById('cat-modal-title');
+        const modalForm = document.getElementById('cat-modal-form');
+        const modalError = document.getElementById('cat-modal-error');
+
+        async function loadCategories() {
+            try {
+                categories = await api.categories.getAll(false);
+                renderTable();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);">${err.message}</td></tr>`;
+            }
+        }
+
+        function renderTable() {
+            if (categories.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                            No categories created yet. Click "+ Add New Category" above.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = categories.map(cat => `
+                <tr>
+                    <td>
+                        <strong style="font-size: 0.95rem;">${cat.name}</strong>
+                    </td>
+                    <td style="color: var(--text-secondary); font-size: 0.88rem; max-width: 320px;">
+                        ${cat.description || 'No description provided'}
+                    </td>
+                    <td>
+                        <span class="status-badge ${cat.active ? 'badge-available' : 'badge-unavailable'}">
+                            ${cat.active ? 'Active' : 'Hidden'}
+                        </span>
+                    </td>
+                    <td style="font-size: 0.82rem; color: var(--text-muted);">${formatDate(cat.createdAt)}</td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-secondary btn-sm edit-cat-btn" data-id="${cat.id}" style="padding: 0.25rem 0.6rem; margin-right: 0.35rem;">
+                            ✏️ Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm delete-cat-btn" data-id="${cat.id}" data-name="${cat.name}" style="padding: 0.25rem 0.6rem;">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Edit Listeners
+            tbody.querySelectorAll('.edit-cat-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    const cat = categories.find(c => c.id === id);
+                    if (cat) openModal(cat);
+                });
+            });
+
+            // Delete Listeners
+            tbody.querySelectorAll('.delete-cat-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.getAttribute('data-id');
+                    const name = btn.getAttribute('data-name');
+                    if (confirm(`Are you sure you want to delete category "${name}"?`)) {
+                        try {
+                            await api.categories.delete(id);
+                            showToast(`Deleted category "${name}"`, 'success');
+                            loadCategories();
+                        } catch (err) {
+                            showToast(err.message || 'Error deleting category', 'error');
+                        }
+                    }
+                });
+            });
+        }
+
+        function openModal(cat = null) {
+            modalError.style.display = 'none';
+            if (cat) {
+                modalTitle.textContent = 'Edit Food Category';
+                document.getElementById('cat-id-input').value = cat.id;
+                document.getElementById('cat-name-input').value = cat.name;
+                document.getElementById('cat-image-input').value = cat.imageUrl || '';
+                document.getElementById('cat-desc-input').value = cat.description || '';
+                document.getElementById('cat-active-input').checked = cat.active;
+            } else {
+                modalTitle.textContent = 'Add Food Category';
+                modalForm.reset();
+                document.getElementById('cat-id-input').value = '';
+                document.getElementById('cat-active-input').checked = true;
+            }
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            modal.classList.remove('show');
+        }
+
+        document.getElementById('open-add-cat-btn').addEventListener('click', () => openModal(null));
+        document.getElementById('cat-modal-close').addEventListener('click', closeModal);
+        document.getElementById('cat-modal-cancel').addEventListener('click', closeModal);
+
+        modalForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            modalError.style.display = 'none';
+
+            const id = document.getElementById('cat-id-input').value;
+            const name = document.getElementById('cat-name-input').value.trim();
+            const imageUrl = document.getElementById('cat-image-input').value.trim();
+            const description = document.getElementById('cat-desc-input').value.trim();
+            const active = document.getElementById('cat-active-input').checked;
+
+            const payload = {
+                name,
+                imageUrl: imageUrl || null,
+                description: description || null,
+                active
+            };
+
+            const saveBtn = document.getElementById('cat-modal-save');
+
+            try {
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+
+                if (id) {
+                    await api.categories.update(id, payload);
+                    showToast(`Updated "${name}"`, 'success');
+                } else {
+                    await api.categories.create(payload);
+                    showToast(`Created category "${name}"`, 'success');
+                }
+
+                closeModal();
+                loadCategories();
+            } catch (err) {
+                modalError.textContent = err.message || 'Error saving category';
+                modalError.style.display = 'block';
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Category';
+            }
+        });
+
+        loadCategories();
+    </script>
+</body>
+</html>

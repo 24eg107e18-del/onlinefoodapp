@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Order Tracking — CraveBite</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/index.html" class="brand-logo">
+                <div class="brand-icon">🍕</div>
+                <div class="brand-name">Crave<span>Bite</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-user-actions"></div>
+        </div>
+    </header>
+
+    <main class="main-content" style="max-width: 860px;">
+        <div class="section-header">
+            <div>
+                <h1 class="section-title">Live Order Tracker</h1>
+                <p class="section-subtitle">Real-time status updates as our kitchen crafts your meal</p>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <button id="refresh-status-btn" class="btn btn-outline btn-sm">🔄 Refresh Status</button>
+                <a href="/my-orders.html" class="btn btn-secondary btn-sm">All Orders</a>
+            </div>
+        </div>
+
+        <div id="tracking-view">
+            <div style="text-align: center; padding: 4rem; color: var(--text-muted);">
+                Connecting to live order tracker...
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            &copy; 2026 CraveBite Online Food Ordering System.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { formatCurrency, formatDate, showToast } from '/js/main.js';
+
+        if (!authStorage.isAuthenticated()) {
+            window.location.href = '/login.html';
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+        const view = document.getElementById('tracking-view');
+        const refreshBtn = document.getElementById('refresh-status-btn');
+
+        const ORDER_STEPS = [
+            { key: 'PENDING', label: 'Order Received', desc: 'Ticket sent to kitchen' },
+            { key: 'CONFIRMED', label: 'Confirmed', desc: 'Accepted by chef' },
+            { key: 'PREPARING', label: 'In Kitchen', desc: 'Freshly cooking' },
+            { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', desc: 'Courier on the way' },
+            { key: 'DELIVERED', label: 'Delivered', desc: 'Enjoy your meal!' }
+        ];
+
+        async function loadTracking() {
+            if (!orderId) {
+                view.innerHTML = `
+                    <div class="card" style="text-align: center; padding: 3rem;">
+                        <h2>No order selected for tracking.</h2>
+                        <p style="margin: 1rem 0;"><a href="/my-orders.html" class="btn btn-primary">View My Orders</a></p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const order = await api.orders.getById(orderId);
+                const currentStatus = order.orderStatus;
+                const isCancelled = currentStatus === 'CANCELLED';
+
+                const currentStepIdx = ORDER_STEPS.findIndex(s => s.key === currentStatus);
+
+                view.innerHTML = `
+                    <div class="card" style="padding: 2.25rem; margin-bottom: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                            <div>
+                                <h2 style="font-size: 1.4rem; font-weight: 800;">Order #${order.id}</h2>
+                                <div style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+                                    Placed at ${formatDate(order.orderDate)}
+                                </div>
+                            </div>
+                            <span class="status-badge status-${order.orderStatus}">
+                                ${order.orderStatus.replace(/_/g, ' ')}
+                            </span>
+                        </div>
+
+                        ${isCancelled ? `
+                            <div style="background: var(--danger-light); color: var(--danger); border: 1.5px solid var(--danger); padding: 1.5rem; border-radius: var(--radius); text-align: center; margin-bottom: 2rem;">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">❌</div>
+                                <h3 style="font-weight: 700; margin-bottom: 0.5rem;">This Order Was Cancelled</h3>
+                                <p style="font-size: 0.95rem;">Please reach out to support if you have any questions or place a fresh order.</p>
+                            </div>
+                        ` : `
+                            <!-- Progress Stepper -->
+                            <div class="order-stepper">
+                                ${ORDER_STEPS.map((step, idx) => {
+                                    let stateClass = '';
+                                    if (idx < currentStepIdx) stateClass = 'completed';
+                                    else if (idx === currentStepIdx) stateClass = 'active';
+
+                                    let icon = idx + 1;
+                                    if (stateClass === 'completed') icon = '✓';
+
+                                    return `
+                                        <div class="step-item ${stateClass}">
+                                            <div class="step-circle">${icon}</div>
+                                            <div class="step-label">${step.label}</div>
+                                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${step.desc}</div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `}
+
+                        <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.95rem;">Delivery Destination:</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.2rem;">${order.deliveryAddress}</div>
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.95rem;">Payment Mode:</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.2rem;">${order.paymentMethod} (${order.paymentStatus})</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items Summary Card -->
+                    <div class="card">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem;">
+                            Dishes in This Order
+                        </h3>
+                        <div>
+                            ${order.items.map(item => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0; border-bottom: 1px solid var(--border-light); font-size: 0.92rem;">
+                                    <div>
+                                        <strong>${item.quantity}x</strong> ${item.foodName}
+                                    </div>
+                                    <div style="font-weight: 700;">
+                                        ${formatCurrency(item.lineTotal)}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="summary-row summary-total">
+                            <span>Total Billed</span>
+                            <span style="color: var(--primary);">${formatCurrency(order.totalAmount)}</span>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                console.error(err);
+                view.innerHTML = `
+                    <div class="card" style="text-align: center; padding: 3rem; color: var(--danger);">
+                        <h3>Error fetching tracking information</h3>
+                        <p>${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        refreshBtn.addEventListener('click', () => {
+            showToast('Refreshing status...', 'info');
+            loadTracking();
+        });
+
+        loadTracking();
+    </script>
+</body>
+</html>

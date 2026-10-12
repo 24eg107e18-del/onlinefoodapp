@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator Portal Login — CraveBite</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body style="background: #1e2229; color: #f0f2f5;">
+    <header class="header" style="background: #181b20; border-bottom: 1px solid #2d333b;">
+        <div class="nav-container">
+            <a href="/index.html" class="brand-logo" style="color: white;">
+                <div class="brand-icon" style="background: linear-gradient(135deg, #ff5722, #e64a19);">👑</div>
+                <div class="brand-name">Crave<span>Admin</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/index.html" class="nav-link" style="color: #9299a6;">Customer Storefront</a></li>
+            </ul>
+            <div class="nav-actions">
+                <a href="/login.html" class="btn btn-outline btn-sm" style="border-color: #444c56; color: #c4c8d0;">
+                    Customer Login
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content" style="display: flex; align-items: center; justify-content: center; min-height: 80vh;">
+        <div class="card" style="width: 100%; max-width: 440px; padding: 2.5rem; background: #24292f; border: 1px solid #323842; color: #f0f2f5; box-shadow: var(--shadow-lg);">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(255, 87, 34, 0.15); color: var(--primary); font-size: 1.75rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+                    🛡️
+                </div>
+                <h1 style="font-size: 1.6rem; font-weight: 800; color: white;">Admin Portal</h1>
+                <p style="color: #8b949e; font-size: 0.88rem; margin-top: 0.25rem;">
+                    Sign in with your administrator credentials to access the management dashboard.
+                </p>
+            </div>
+
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label class="form-label" for="admin-email" style="color: #c9d1d9;">Admin Email</label>
+                    <input type="email" id="admin-email" class="form-control" placeholder="admin@foodordering.com" required autocomplete="email" style="background: #161b22; border-color: #30363d; color: white;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="admin-password" style="color: #c9d1d9;">Admin Password</label>
+                    <input type="password" id="admin-password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password" style="background: #161b22; border-color: #30363d; color: white;">
+                </div>
+
+                <div id="admin-error-box" style="display: none; color: #ff7b72; background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.4); padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem; font-size: 0.88rem;"></div>
+
+                <button type="submit" id="admin-submit-btn" class="btn btn-primary btn-lg" style="width: 100%;">
+                    Access Admin Dashboard &rarr;
+                </button>
+            </form>
+
+            <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid #30363d; text-align: center; font-size: 0.85rem; color: #8b949e;">
+                Need to create the first admin account?<br>
+                Configure <code style="color: #79c0ff;">ADMIN_EMAIL</code> and <code style="color: #79c0ff;">ADMIN_PASSWORD</code> in environment variables.
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { showToast } from '/js/main.js';
+
+        if (authStorage.isAuthenticated() && authStorage.isAdmin()) {
+            window.location.href = '/admin-dashboard.html';
+        }
+
+        const form = document.getElementById('admin-login-form');
+        const errorBox = document.getElementById('admin-error-box');
+        const submitBtn = document.getElementById('admin-submit-btn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorBox.style.display = 'none';
+
+            const email = document.getElementById('admin-email').value.trim();
+            const password = document.getElementById('admin-password').value;
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Authenticating...';
+
+                const response = await api.auth.login({ email, password });
+
+                if (response.role !== 'ADMIN') {
+                    throw new Error('Access Denied: This account does not possess administrative privileges.');
+                }
+
+                authStorage.setToken(response.token);
+                authStorage.setUser({
+                    id: response.id,
+                    name: response.name,
+                    email: response.email,
+                    role: response.role
+                });
+
+                showToast(`Welcome Administrator ${response.name}!`, 'success');
+                setTimeout(() => window.location.href = '/admin-dashboard.html', 700);
+            } catch (err) {
+                errorBox.textContent = err.message || 'Authentication failed. Please verify your administrator credentials.';
+                errorBox.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Access Admin Dashboard →';
+            }
+        });
+    </script>
+</body>
+</html>

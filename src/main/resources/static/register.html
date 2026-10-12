@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Customer Account — CraveBite</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/index.html" class="brand-logo">
+                <div class="brand-icon">🍕</div>
+                <div class="brand-name">Crave<span>Bite</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-user-actions"></div>
+        </div>
+    </header>
+
+    <main class="main-content" style="display: flex; align-items: center; justify-content: center; min-height: 80vh;">
+        <div class="card" style="width: 100%; max-width: 480px; padding: 2.25rem;">
+            <div style="text-align: center; margin-bottom: 1.75rem;">
+                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎉</div>
+                <h1 style="font-size: 1.6rem; font-weight: 700;">Create Your Account</h1>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Join CraveBite to order quick, track your deliveries, and enjoy delicious deals.</p>
+            </div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label class="form-label" for="reg-name">Full Name *</label>
+                    <input type="text" id="reg-name" class="form-control" placeholder="John Doe" required minlength="2">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reg-email">Email Address *</label>
+                    <input type="email" id="reg-email" class="form-control" placeholder="john@example.com" required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reg-password">Password *</label>
+                    <input type="password" id="reg-password" class="form-control" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reg-phone">Phone Number</label>
+                    <input type="tel" id="reg-phone" class="form-control" placeholder="(555) 123-4567">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reg-address">Default Delivery Address</label>
+                    <textarea id="reg-address" class="form-control" placeholder="Apartment / House number, Street, City"></textarea>
+                </div>
+
+                <div id="reg-error-msg" style="display: none; color: var(--danger); font-size: 0.88rem; margin-bottom: 1rem; background: var(--danger-light); padding: 0.6rem; border-radius: var(--radius-sm);"></div>
+
+                <button type="submit" id="reg-submit-btn" class="btn btn-primary btn-lg" style="width: 100%;">Create Account</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+                Already have an account? <a href="/login.html" style="font-weight: 600;">Sign in here</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            &copy; 2026 CraveBite Online Food Ordering System.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { showToast } from '/js/main.js';
+
+        if (authStorage.isAuthenticated()) {
+            window.location.href = '/menu.html';
+        }
+
+        const form = document.getElementById('register-form');
+        const errorDiv = document.getElementById('reg-error-msg');
+        const submitBtn = document.getElementById('reg-submit-btn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.style.display = 'none';
+
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const phone = document.getElementById('reg-phone').value.trim();
+            const address = document.getElementById('reg-address').value.trim();
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating account...';
+
+                const response = await api.auth.register({
+                    name,
+                    email,
+                    password,
+                    phone: phone || null,
+                    address: address || null
+                });
+
+                authStorage.setToken(response.token);
+                authStorage.setUser({
+                    id: response.id,
+                    name: response.name,
+                    email: response.email,
+                    role: response.role
+                });
+
+                showToast('Account created successfully!', 'success');
+                setTimeout(() => window.location.href = '/menu.html', 800);
+            } catch (err) {
+                errorDiv.textContent = err.message || 'Registration failed. Please check your inputs.';
+                errorDiv.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

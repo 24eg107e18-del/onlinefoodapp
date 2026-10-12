@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Login — CraveBite</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/index.html" class="brand-logo">
+                <div class="brand-icon">🍕</div>
+                <div class="brand-name">Crave<span>Bite</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-user-actions"></div>
+        </div>
+    </header>
+
+    <main class="main-content" style="display: flex; align-items: center; justify-content: center; min-height: 75vh;">
+        <div class="card" style="width: 100%; max-width: 440px; padding: 2.25rem;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👋</div>
+                <h1 style="font-size: 1.6rem; font-weight: 700;">Welcome Back</h1>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Sign in to order food, track deliveries, and manage your cart.</p>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="login-email">Email Address</label>
+                    <input type="email" id="login-email" class="form-control" placeholder="name@example.com" required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+
+                <div id="login-error-msg" style="display: none; color: var(--danger); font-size: 0.88rem; margin-bottom: 1rem; background: var(--danger-light); padding: 0.6rem; border-radius: var(--radius-sm);"></div>
+
+                <button type="submit" id="login-submit-btn" class="btn btn-primary btn-lg" style="width: 100%;">Sign In</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+                Don't have an account? <a href="/register.html" style="font-weight: 600;">Sign up here</a>
+            </div>
+
+            <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 0.85rem; color: var(--text-muted);">
+                Are you a restaurant administrator? <a href="/admin-login.html">Admin Login</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            &copy; 2026 CraveBite Online Food Ordering System.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { showToast } from '/js/main.js';
+
+        // Redirect if already logged in
+        if (authStorage.isAuthenticated()) {
+            if (authStorage.isAdmin()) {
+                window.location.href = '/admin-dashboard.html';
+            } else {
+                window.location.href = '/menu.html';
+            }
+        }
+
+        const loginForm = document.getElementById('login-form');
+        const errorDiv = document.getElementById('login-error-msg');
+        const submitBtn = document.getElementById('login-submit-btn');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.style.display = 'none';
+
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Signing in...';
+
+                const response = await api.auth.login({ email, password });
+
+                authStorage.setToken(response.token);
+                authStorage.setUser({
+                    id: response.id,
+                    name: response.name,
+                    email: response.email,
+                    role: response.role
+                });
+
+                showToast(`Welcome back, ${response.name}!`, 'success');
+
+                setTimeout(() => {
+                    if (response.role === 'ADMIN') {
+                        window.location.href = '/admin-dashboard.html';
+                    } else {
+                        window.location.href = '/menu.html';
+                    }
+                }, 800);
+            } catch (err) {
+                errorDiv.textContent = err.message || 'Invalid email or password. Please try again.';
+                errorDiv.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>

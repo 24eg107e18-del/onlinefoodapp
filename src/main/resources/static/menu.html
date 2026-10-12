@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Menu — CraveBite</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/index.html" class="brand-logo">
+                <div class="brand-icon">🍕</div>
+                <div class="brand-name">Crave<span>Bite</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-user-actions"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="section-header">
+            <div>
+                <h1 class="section-title">Explore Our Delicious Menu</h1>
+                <p class="section-subtitle">Hand-prepared with fresh ingredients and chef-crafted perfection</p>
+            </div>
+            <div style="font-size: 0.95rem; color: var(--text-secondary);" id="item-count-label">
+                Showing all items
+            </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div class="filter-bar">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" placeholder="Search pizza, burger, pasta, biryani...">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; font-weight: 500; cursor: pointer;">
+                    <input type="checkbox" id="available-only-toggle" checked style="accent-color: var(--primary);">
+                    In Stock Only
+                </label>
+            </div>
+        </div>
+
+        <!-- Category Filter Chips -->
+        <div class="category-chips" id="menu-category-chips" style="margin-bottom: 2rem;">
+            <button class="category-chip active" data-category="">All Categories</button>
+        </div>
+
+        <!-- Foods Grid -->
+        <div class="food-grid" id="menu-food-grid">
+            <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">
+                Loading menu...
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            &copy; 2026 CraveBite Online Food Ordering System.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { formatCurrency, showToast, refreshCartCount } from '/js/main.js';
+
+        let currentCategoryId = '';
+        let currentSearch = '';
+        let availableOnly = true;
+
+        // Check URL parameters for default category
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('category')) {
+            currentCategoryId = urlParams.get('category');
+        }
+
+        async function loadCategories() {
+            try {
+                const categories = await api.categories.getAll(true);
+                const container = document.getElementById('menu-category-chips');
+                
+                let html = `<button class="category-chip ${!currentCategoryId ? 'active' : ''}" data-category="">All Categories</button>`;
+                categories.forEach(cat => {
+                    const isActive = currentCategoryId === cat.id ? 'active' : '';
+                    html += `<button class="category-chip ${isActive}" data-category="${cat.id}">${cat.name}</button>`;
+                });
+                container.innerHTML = html;
+
+                container.querySelectorAll('.category-chip').forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        container.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+                        chip.classList.add('active');
+                        currentCategoryId = chip.getAttribute('data-category');
+                        loadFoods();
+                    });
+                });
+            } catch (err) {
+                console.error('Error loading categories:', err);
+            }
+        }
+
+        async function loadFoods() {
+            const grid = document.getElementById('menu-food-grid');
+            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">Loading dishes...</div>`;
+
+            try {
+                const params = {};
+                if (currentCategoryId) params.category = currentCategoryId;
+                if (currentSearch) params.search = currentSearch;
+                if (availableOnly) params.available = true;
+
+                const foods = await api.foods.getAll(params);
+                const countLabel = document.getElementById('item-count-label');
+                countLabel.textContent = `Found ${foods.length} delicious item${foods.length === 1 ? '' : 's'}`;
+
+                if (!foods || foods.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 1rem;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🍽️</div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">No Dishes Found</h3>
+                            <p style="color: var(--text-secondary); max-width: 400px; margin: 0 auto 1.5rem auto;">
+                                Try adjusting your search keyword or selecting a different category filter.
+                            </p>
+                            <button id="reset-filter-btn" class="btn btn-outline btn-sm">Clear Filters</button>
+                        </div>
+                    `;
+                    document.getElementById('reset-filter-btn')?.addEventListener('click', () => {
+                        currentSearch = '';
+                        currentCategoryId = '';
+                        document.getElementById('search-input').value = '';
+                        document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+                        document.querySelector('.category-chip[data-category=""]')?.classList.add('active');
+                        loadFoods();
+                    });
+                    return;
+                }
+
+                grid.innerHTML = foods.map(food => `
+                    <div class="food-card">
+                        <div class="food-card-img-wrap">
+                            <img src="${food.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'}"
+                                 alt="${food.name}"
+                                 class="food-card-img"
+                                 onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'">
+                            <span class="food-card-badge ${food.available ? 'badge-available' : 'badge-unavailable'}">
+                                ${food.available ? 'In Stock' : 'Sold Out'}
+                            </span>
+                        </div>
+                        <div class="food-card-body">
+                            <span class="food-card-category">${food.categoryName || 'Menu Item'}</span>
+                            <a href="/food-details.html?id=${food.id}" class="food-card-title">${food.name}</a>
+                            <p class="food-card-desc">${food.description || 'Specially prepared using premium ingredients.'}</p>
+                            <div class="food-card-footer">
+                                <div class="food-card-price">${formatCurrency(food.price)}</div>
+                                <button class="btn btn-primary btn-sm add-cart-btn"
+                                        data-id="${food.id}"
+                                        data-name="${food.name}"
+                                        ${!food.available ? 'disabled' : ''}>
+                                    ${food.available ? 'Add to Cart' : 'Unavailable'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Attach Add to Cart Click Handlers
+                grid.querySelectorAll('.add-cart-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const foodId = btn.getAttribute('data-id');
+                        const foodName = btn.getAttribute('data-name');
+                        if (!authStorage.isAuthenticated()) {
+                            showToast('Please log in to add items to your cart.', 'info');
+                            setTimeout(() => window.location.href = '/login.html', 1000);
+                            return;
+                        }
+
+                        try {
+                            btn.disabled = true;
+                            btn.textContent = 'Adding...';
+                            await api.cart.add(foodId, 1);
+                            showToast(`Added "${foodName}" to cart!`, 'success');
+                            refreshCartCount();
+                        } catch (err) {
+                            showToast(err.message || 'Error adding to cart', 'error');
+                        } finally {
+                            btn.disabled = false;
+                            btn.textContent = 'Add to Cart';
+                        }
+                    });
+                });
+            } catch (err) {
+                console.error('Error fetching foods:', err);
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--danger);">
+                        Error loading food menu. Please try again.
+                    </div>
+                `;
+            }
+        }
+
+        // Search input debounce listener
+        let searchDebounceTimeout;
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchDebounceTimeout);
+            searchDebounceTimeout = setTimeout(() => {
+                currentSearch = e.target.value.trim();
+                loadFoods();
+            }, 350);
+        });
+
+        // Availability Toggle
+        const toggle = document.getElementById('available-only-toggle');
+        toggle.addEventListener('change', (e) => {
+            availableOnly = e.target.checked;
+            loadFoods();
+        });
+
+        // Initialize page
+        loadCategories();
+        loadFoods();
+    </script>
+</body>
+</html>

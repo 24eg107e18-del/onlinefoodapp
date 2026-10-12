@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Shopping Cart — CraveBite</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/index.html" class="brand-logo">
+                <div class="brand-icon">🍕</div>
+                <div class="brand-name">Crave<span>Bite</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-user-actions"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="section-header">
+            <div>
+                <h1 class="section-title">Your Food Cart</h1>
+                <p class="section-subtitle">Review items, adjust quantities, and proceed to checkout</p>
+            </div>
+            <button id="clear-cart-btn" class="btn btn-outline btn-sm" style="display: none;">
+                🗑️ Clear Cart
+            </button>
+        </div>
+
+        <div id="cart-container">
+            <div style="text-align: center; padding: 4rem; color: var(--text-muted);">
+                Loading your cart...
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            &copy; 2026 CraveBite Online Food Ordering System.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { formatCurrency, showToast, refreshCartCount } from '/js/main.js';
+
+        const container = document.getElementById('cart-container');
+        const clearCartBtn = document.getElementById('clear-cart-btn');
+
+        async function loadCart() {
+            if (!authStorage.isAuthenticated()) {
+                container.innerHTML = `
+                    <div class="card" style="text-align: center; padding: 3.5rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+                        <h2 style="margin-bottom: 0.5rem;">Please Log In to View Your Cart</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Your cart is securely stored with your account.</p>
+                        <a href="/login.html" class="btn btn-primary btn-lg">Login to Account</a>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const cart = await api.cart.get();
+                refreshCartCount();
+
+                if (!cart || !cart.items || cart.items.length === 0) {
+                    clearCartBtn.style.display = 'none';
+                    container.innerHTML = `
+                        <div class="card" style="text-align: center; padding: 4rem;">
+                            <div style="font-size: 3.5rem; margin-bottom: 1rem;">🛒</div>
+                            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Your Cart is Empty</h2>
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Looks like you haven't added anything to your cart yet.</p>
+                            <a href="/menu.html" class="btn btn-primary btn-lg">Browse Our Menu</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                clearCartBtn.style.display = 'inline-flex';
+
+                container.innerHTML = `
+                    <div class="cart-layout">
+                        <!-- Left: Item List -->
+                        <div class="card">
+                            <div style="font-weight: 700; font-size: 1.15rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                                Items in Cart (${cart.totalQuantity})
+                            </div>
+                            <div id="cart-items-list">
+                                ${cart.items.map(item => `
+                                    <div class="cart-item">
+                                        <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'}"
+                                             alt="${item.foodName}"
+                                             class="cart-item-img"
+                                             onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'">
+                                        <div class="cart-item-info">
+                                            <a href="/food-details.html?id=${item.foodItemId}" class="cart-item-name">${item.foodName}</a>
+                                            <div class="cart-item-price">${formatCurrency(item.price)} each</div>
+                                            ${!item.available ? '<span style="color: var(--danger); font-size: 0.8rem; font-weight: 600;">⚠️ Currently Unavailable</span>' : ''}
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button class="quantity-btn update-qty-btn" data-id="${item.foodItemId}" data-qty="${item.quantity - 1}">&minus;</button>
+                                            <div class="quantity-value">${item.quantity}</div>
+                                            <button class="quantity-btn update-qty-btn" data-id="${item.foodItemId}" data-qty="${item.quantity + 1}">&plus;</button>
+                                        </div>
+                                        <div style="font-weight: 700; min-width: 75px; text-align: right;">
+                                            ${formatCurrency(item.lineTotal)}
+                                        </div>
+                                        <button class="btn btn-secondary btn-sm remove-item-btn" data-id="${item.foodItemId}" title="Remove item" style="padding: 0.35rem 0.6rem;">
+                                            ✕
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Right: Order Summary -->
+                        <div class="card" style="position: sticky; top: 90px;">
+                            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                                Order Summary
+                            </h2>
+                            <div class="summary-row">
+                                <span>Subtotal</span>
+                                <span>${formatCurrency(cart.subtotal)}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Estimated Tax (5%)</span>
+                                <span>${formatCurrency(cart.tax)}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Delivery Fee</span>
+                                <span>${cart.deliveryFee > 0 ? formatCurrency(cart.deliveryFee) : '<strong style="color: var(--success);">FREE</strong>'}</span>
+                            </div>
+                            ${cart.deliveryFee > 0 ? `
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                                    💡 Tip: Orders $40 and over enjoy free delivery!
+                                </div>
+                            ` : ''}
+                            <div class="summary-row summary-total">
+                                <span>Total Amount</span>
+                                <span style="color: var(--primary);">${formatCurrency(cart.totalAmount)}</span>
+                            </div>
+                            <a href="/checkout.html" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 1.25rem;">
+                                Proceed to Checkout &rarr;
+                            </a>
+                            <div style="text-align: center; margin-top: 1rem;">
+                                <a href="/menu.html" style="font-size: 0.88rem; color: var(--text-secondary);">&larr; Continue Shopping</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Quantity controls listener
+                container.querySelectorAll('.update-qty-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const foodId = btn.getAttribute('data-id');
+                        const qty = parseInt(btn.getAttribute('data-qty'), 10);
+                        try {
+                            btn.disabled = true;
+                            await api.cart.update(foodId, qty);
+                            loadCart();
+                        } catch (err) {
+                            showToast(err.message || 'Error updating quantity', 'error');
+                            btn.disabled = false;
+                        }
+                    });
+                });
+
+                // Remove item listener
+                container.querySelectorAll('.remove-item-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const foodId = btn.getAttribute('data-id');
+                        if (confirm('Are you sure you want to remove this item from your cart?')) {
+                            try {
+                                await api.cart.remove(foodId);
+                                showToast('Item removed from cart', 'info');
+                                loadCart();
+                            } catch (err) {
+                                showToast(err.message || 'Error removing item', 'error');
+                            }
+                        }
+                    });
+                });
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `
+                    <div class="card" style="text-align: center; padding: 3rem; color: var(--danger);">
+                        <h3>Error loading cart</h3>
+                        <p>${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        clearCartBtn.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to clear your entire cart?')) {
+                try {
+                    await api.cart.clear();
+                    showToast('Cart cleared', 'info');
+                    loadCart();
+                } catch (err) {
+                    showToast(err.message || 'Error clearing cart', 'error');
+                }
+            }
+        });
+
+        loadCart();
+    </script>
+</body>
+</html>

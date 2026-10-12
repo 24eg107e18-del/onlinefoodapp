@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Profile — CraveBite</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/index.html" class="brand-logo">
+                <div class="brand-icon">🍕</div>
+                <div class="brand-name">Crave<span>Bite</span></div>
+            </a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-user-actions"></div>
+        </div>
+    </header>
+
+    <main class="main-content" style="max-width: 680px;">
+        <div class="section-header">
+            <div>
+                <h1 class="section-title">My Account Profile</h1>
+                <p class="section-subtitle">Manage your personal contact details and saved delivery address</p>
+            </div>
+            <a href="/my-orders.html" class="btn btn-outline btn-sm">View Order History</a>
+        </div>
+
+        <div class="card" style="padding: 2.25rem;">
+            <div id="profile-container">
+                <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    Loading profile...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            &copy; 2026 CraveBite Online Food Ordering System.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { api, authStorage } from '/js/api.js';
+        import { formatDate, showToast } from '/js/main.js';
+
+        if (!authStorage.isAuthenticated()) {
+            window.location.href = '/login.html';
+        }
+
+        const container = document.getElementById('profile-container');
+
+        async function loadProfile() {
+            try {
+                const profile = await api.users.getProfile();
+
+                container.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1.5rem;">
+                        <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700;">
+                            ${profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                        <div>
+                            <h2 style="font-size: 1.35rem; font-weight: 700;">${profile.name}</h2>
+                            <div style="color: var(--text-muted); font-size: 0.88rem;">${profile.email} • Role: <strong>${profile.role}</strong></div>
+                            <div style="color: var(--text-muted); font-size: 0.82rem; margin-top: 0.2rem;">Member since ${formatDate(profile.createdAt)}</div>
+                        </div>
+                    </div>
+
+                    <form id="profile-form">
+                        <div class="form-group">
+                            <label class="form-label" for="prof-name">Full Name *</label>
+                            <input type="text" id="prof-name" class="form-control" value="${profile.name || ''}" required minlength="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="prof-email">Email Address</label>
+                            <input type="email" id="prof-email" class="form-control" value="${profile.email || ''}" readonly style="background: var(--bg-subtle); color: var(--text-muted);">
+                            <small style="color: var(--text-muted);">Email address cannot be changed once registered.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="prof-phone">Phone Number</label>
+                            <input type="tel" id="prof-phone" class="form-control" value="${profile.phone || ''}" placeholder="(555) 000-0000">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="prof-address">Default Delivery Address</label>
+                            <textarea id="prof-address" class="form-control" rows="3" placeholder="Apartment / Suite, Street address, City">${profile.address || ''}</textarea>
+                        </div>
+
+                        <div id="prof-error-msg" style="display: none; color: var(--danger); background: var(--danger-light); padding: 0.6rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.88rem;"></div>
+
+                        <button type="submit" id="prof-submit-btn" class="btn btn-primary btn-lg" style="width: 100%;">
+                            Save Profile Changes
+                        </button>
+                    </form>
+                `;
+
+                const form = document.getElementById('profile-form');
+                const errorBox = document.getElementById('prof-error-msg');
+                const submitBtn = document.getElementById('prof-submit-btn');
+
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    errorBox.style.display = 'none';
+
+                    const name = document.getElementById('prof-name').value.trim();
+                    const phone = document.getElementById('prof-phone').value.trim();
+                    const address = document.getElementById('prof-address').value.trim();
+
+                    try {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Saving...';
+
+                        const updated = await api.users.updateProfile({
+                            name,
+                            phone: phone || null,
+                            address: address || null
+                        });
+
+                        // Update cached user name in local storage
+                        const currentUser = authStorage.getUser();
+                        if (currentUser) {
+                            currentUser.name = updated.name;
+                            authStorage.setUser(currentUser);
+                        }
+
+                        showToast('Profile updated successfully!', 'success');
+                        loadProfile();
+                    } catch (err) {
+                        errorBox.textContent = err.message || 'Error updating profile';
+                        errorBox.style.display = 'block';
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Save Profile Changes';
+                    }
+                });
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--danger);">
+                        <h3>Failed to load user profile</h3>
+                        <p>${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>
